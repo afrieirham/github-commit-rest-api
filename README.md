@@ -3,6 +3,11 @@
 **Prerequisite**
 
 - Get your GitHub Personal Access Token [here](https://github.com/settings/tokens)
+  - Fine-grained tokens
+    - All repository access or choose specific repository
+    - Read and write access for `Contents`
+  - Tokens (classic)
+    - Tick ✅ `repo` scope
 - Add into `.env` file
 
 ---
