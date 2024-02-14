@@ -1,5 +1,12 @@
 # GitHub Commit REST API.
 
+**Prerequisite**
+
+- Get your GitHub Personal Access Token [here](https://github.com/settings/tokens)
+- Add into `.env` file
+
+---
+
 Make `POST` request to `/api/commit` with body below
 
 Body
@@ -22,6 +29,8 @@ Response
   "url": "https://github.com/<your-github-username>/<your-repo-name>/commit/<commit-sha>"
 }
 ```
+
+---
 
 ### How to make GitHub commit programatically.
 
