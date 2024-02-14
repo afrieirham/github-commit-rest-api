@@ -1,40 +1,96 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# GitHub Commit REST API.
 
-## Getting Started
+Make `POST` request to `/api/commit` with body below
 
-First, run the development server:
+Body
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```json
+{
+  "username": "your-github-username",
+  "reponame": "your-repo-name",
+  "filePath": "path-to-file-to-edit.txt",
+  "content": "file content here",
+  "message": "commit message here"
+}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Response
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+```json
+{
+  "status": "success",
+  "url": "https://github.com/<your-github-username>/<your-repo-name>/commit/<commit-sha>"
+}
+```
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+### How to make GitHub commit programatically.
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+What's hapening under the hood.
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+Reference: https://blog.apihero.run/how-to-programmatically-create-a-commit-on-github
 
-## Learn More
+**1. Fetch latest commit to get reference** [[Learn more](https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#get-a-reference)]
 
-To learn more about Next.js, take a look at the following resources:
+```
+GET /repos/{{owner}}/{{repo}}/git/ref/heads/{{branch}}
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+> Save `body.object.sha` from response as `reference_sha`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+**2. Create a tree** [[Learn more](https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28#create-a-tree)]
 
-## Deploy on Vercel
+```
+POST /repos/{{owner}}/{{repo}}/git/trees
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Body
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+```json
+{
+  "base_tree": "{{reference_sha}}",
+  "tree": [
+    {
+      "path": "{{filename}}",
+      "mode": "100644",
+      "type": "blob",
+      "content": "hello world"
+    }
+  ]
+}
+```
+
+> Save `body.sha` from response as `tree_sha`.
+
+**3. Create a commit** [[Learn more](https://docs.github.com/en/rest/git/commits?apiVersion=2022-11-28#create-a-commit)]
+
+```
+POST /repos/{{owner}}/{{repo}}/git/commits
+```
+
+Body
+
+```json
+{
+  "message": "commit message",
+  "parents": ["{{reference_sha}}"],
+  "tree": "{{tree_sha}}"
+}
+```
+
+> Save `body.sha` from response as `commit_sha`.
+
+**4. Update the reference** [[Learn more](https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#update-a-reference)]
+
+```
+PATCH /repos/{{owner}}/{{repo}}/git/refs/heads/{{branch}}
+```
+
+Body
+
+```json
+{
+  "sha": "{{commit_sha}}"
+}
+```
+
+**DONE!** 🥳
